@@ -24,7 +24,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 $_SESSION['username']  = $email;
                 $_SESSION['role']      = $user['role'];
                 $_SESSION['firstName'] = $user['firstName'];
-                $_SESSION['lastName'] = $user['lastName']; // Store the firstName in session
+                $_SESSION['lastName']  = $user['lastName'];
                 header("Location: ../main.php");
                 exit();
             } else {
