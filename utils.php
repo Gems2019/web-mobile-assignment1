@@ -84,7 +84,3 @@ function is_valid_email($email, &$error_message)
     return true;
 }
 ?>
-
-<?php
-
-?>
