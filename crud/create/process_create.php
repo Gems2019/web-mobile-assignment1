@@ -1,59 +1,53 @@
 <?php
-include("../../inc_header.php");
-include("../../inc_db_params.php");
-
 session_start();
+require_once "../../inc_db_params.php";
 
-// Redirect if user is not logged in
 if (!isset($_SESSION['username'])) {
     header("Location: ../../login/login.php");
     exit();
 }
 
-// Check if the Articles table exists
-$table_check = $db->querySingle("SELECT name FROM sqlite_master WHERE type='table' AND name='Articles'");
-if (!$table_check) {
-    die("<p class='alert alert-danger'>Error: The 'Articles' table does not exist! Make sure to create it first.</p>");
-}
-
 // Handle form submission
 if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['create'])) {
+    try {
+        $db = new PDO("sqlite:" . __DIR__ . "/../../blog3795.sqlite");
+        $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-    // Retrieve the logged-in contributor's username (email)
-    $contributorUsername = $_SESSION['username'];
+        // Check if the Articles table exists
+        $table_check = $db->query("SELECT name FROM sqlite_master WHERE type='table' AND name='Articles'")->fetch();
+        if (!$table_check) {
+            $_SESSION['error'] = "Error: The 'Articles' table does not exist!";
+            header("Location: create.php");
+            exit();
+        }
 
-    // Retrieve input from the form
-    // Adjust field names to match your create form
-    $title     = trim($_POST['Title']);
-    $body      = trim($_POST['Body']);
-    $startDate = $_POST['StartDate'];
-    $endDate   = $_POST['EndDate'];
+        // Retrieve the logged-in contributor's username and form data
+        $contributorUsername = $_SESSION['username'];
+        $title = trim($_POST['Title']);
+        $body = trim($_POST['Body']);
+        $startDate = $_POST['StartDate'];
+        $endDate = $_POST['EndDate'];
 
-    // Prepare an INSERT statement for the Articles table
-    $stmt = $db->prepare("
-        INSERT INTO Articles (Title, Body, StartDate, EndDate, ContributorUsername) 
-        VALUES (:Title, :Body, :StartDate, :EndDate, :ContributorUsername)
-    ");
+        // Prepare and execute INSERT statement
+        $stmt = $db->prepare("
+            INSERT INTO Articles (Title, Body, StartDate, EndDate, ContributorUsername) 
+            VALUES (?, ?, ?, ?, ?)
+        ");
+        
+        $stmt->execute([$title, $body, $startDate, $endDate, $contributorUsername]);
 
-    // Bind form values to the SQL statement
-    $stmt->bindValue(':Title', $title, SQLITE3_TEXT);
-    $stmt->bindValue(':Body', $body, SQLITE3_TEXT);
-    $stmt->bindValue(':StartDate', $startDate, SQLITE3_TEXT);
-    $stmt->bindValue(':EndDate', $endDate, SQLITE3_TEXT);
-    $stmt->bindValue(':ContributorUsername', $contributorUsername, SQLITE3_TEXT);
+        $_SESSION['message'] = "Article created successfully.";
+        header("Location: ../../main.php");
+        exit();
 
-    // Execute the statement
-    $result = $stmt->execute();
-
-    // Provide a success or error message
-    if ($result) {
-        echo "<p class='alert alert-success'>Article added successfully.</p>";
-    } else {
-        echo "<p class='alert alert-danger'>Error adding article: " . $db->lastErrorMsg() . "</p>";
+    } catch (PDOException $e) {
+        $_SESSION['error'] = "Database error: " . $e->getMessage();
+        header("Location: create.php");
+        exit();
     }
-
-    // Close the database connection
-    $db->close();
+} else {
+    header("Location: create.php");
+    exit();
 }
 ?>
 
