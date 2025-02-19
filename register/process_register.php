@@ -47,7 +47,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     }
 
     try {
-        $db = new PDO("sqlite:" . __DIR__ . "/../blog3795.sqlite");
+        $db = new PDO("sqlite:../blog3795.sqlite");
         $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
         // Check if email already exists
