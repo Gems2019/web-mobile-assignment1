@@ -1,15 +1,28 @@
-<?php session_start(); ?>
-
-<!-- Require Database Connection -->
-<?php require_once "../inc_db_params.php"; ?>
-
 <?php
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+error_log("Session path: " . session_save_path());
+error_log("Database path: " . __DIR__ . "/../blog3795.sqlite");
+
+// Set session save path explicitly
+$sessionPath = sys_get_temp_dir();
+if (!is_writable($sessionPath)) {
+    $sessionPath = __DIR__ . '/../temp';
+    if (!file_exists($sessionPath)) {
+        mkdir($sessionPath, 0777, true);
+    }
+}
+session_save_path($sessionPath);
+session_start();
+
+require_once "../inc_db_params.php";
+
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $email = trim($_POST["email"]);
     $password = $_POST["password"];
 
     try {
-        $db = new PDO("sqlite:../blog3795.sqlite");
+        $db = new PDO("sqlite:" . __DIR__ . "/../blog3795.sqlite");
         $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
         // Fetch user by email - now including role and isApproved
@@ -29,22 +42,22 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 exit();
             } else {
                 $_SESSION['error'] = "Your account is pending approval.";
-                header("Location: login.php");
+                header("Location: /login/login.php"); // Use absolute paths
                 exit();
             }
         } else {
             // Invalid credentials
             $_SESSION['error'] = "Invalid email or password.";
-            header("Location: login.php");
+            header("Location: /login/login.php"); // Use absolute paths
             exit();
         }
     } catch (PDOException $e) {
         $_SESSION['error'] = "Database error: " . $e->getMessage();
-        header("Location: login.php");
+        header("Location: /login/login.php"); // Use absolute paths
         exit();
     }
 } else {
-    header("Location: login.php");
+    header("Location: /login/login.php"); // Use absolute paths
     exit();
 }
 ?>
